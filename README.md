@@ -12,3 +12,11 @@ Features
 - An OpenAI async API application for dynamic, high-throughput, real-time, batched GPT requests
 
 See *example.py* for detailed usage.
+
+## Requirements
+
+The OpenAI application is tested with the following dependencies.
+```
+tiktoken==0.7.0
+openai==1.35.7
+```
