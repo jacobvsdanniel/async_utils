@@ -31,11 +31,11 @@ def main():
     # client
     api_key = input("API key: ")
     logger.info("received API key")
-    client = AsyncOpenAI(api_key=api_key)
+    OpenAITaskDatum.client = AsyncOpenAI(api_key=api_key)
 
     # model
     model = "gpt-3.5-turbo"
-    tokenizer = tiktoken.encoding_for_model(model)
+    OpenAITaskDatum.tokenizer = tiktoken.encoding_for_model(model)
     choices = 2
 
     # input data
@@ -51,11 +51,6 @@ def main():
 
     # quota
     quota_manager = OpenAIQuotaManager(60, 500)
-
-    # task config
-    config_task_datum = OpenAITaskDatum(0, {"text_in": ""})
-    config_task_datum.set_client(client)
-    config_task_datum.set_tokenizer(tokenizer)
 
     # dummy run
     # asyncio.run(process_batch_data(

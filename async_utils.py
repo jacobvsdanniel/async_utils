@@ -211,10 +211,7 @@ class OpenAITaskDatum(BasicTaskDatum):
     def __init__(self, task_id, data):
         super().__init__(task_id, data)
 
-        try:
-            self.data["in_tokens"] = len(self.tokenizer.encode(self.data["text_in"]))
-        except AttributeError:
-            pass
+        self.data["in_tokens"] = len(self.tokenizer.encode(self.data["text_in"]))
         self.data["text_out_list"] = []
         return
 
@@ -223,16 +220,6 @@ class OpenAITaskDatum(BasicTaskDatum):
             len(self.tokenizer.encode(text_out))
             for text_out in self.data["text_out_list"]
         )
-        return
-
-    @classmethod
-    def set_tokenizer(cls, tokenizer):
-        cls.tokenizer = tokenizer
-        return
-
-    @classmethod
-    def set_client(cls, client):
-        cls.client = client
         return
 
 
