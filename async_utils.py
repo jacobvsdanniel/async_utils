@@ -153,7 +153,7 @@ async def process_batch_data(
                 if start_id is not None and input_task_id < start_id:
                     continue
                 if end_id is not None and input_task_id > end_id:
-                    continue
+                    break
                 if input_task_id in completed_task_id_set:
                     continue
                 line_data = json.loads(line)
