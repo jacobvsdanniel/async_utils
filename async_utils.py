@@ -3,6 +3,7 @@ import json
 import time
 import heapq
 import random
+import struct
 import asyncio
 import logging
 import datetime
@@ -46,6 +47,9 @@ class BasicTaskDatum:
             "end_time": end_time,
         }
         return json_obj
+
+    def finish(self):
+        return
 
 
 class BasicQuotaManager:
@@ -113,6 +117,7 @@ async def process_batch_data(
                     successful = False
 
                 if successful:
+                    running_task_datum.finish()
                     logger.info(f"[success] {running_task_datum.get_log_string()}")
                     json.dump(running_task_datum.get_json_obj(), fw)
                     fw.write("\n")
@@ -153,6 +158,7 @@ async def process_batch_data(
                 if start_id is not None and input_task_id < start_id:
                     continue
                 if end_id is not None and input_task_id > end_id:
+                    no_more_input = True
                     break
                 if input_task_id in completed_task_id_set:
                     continue
@@ -256,7 +262,7 @@ async def openai_task_runner(task_datum):
         n=task_datum.data["choices"],
         messages=[
             {"role": "user", "content": task_datum.data["text_in"]},
-        ]
+        ],
     )
     task_datum.end_time = time.time()
 
@@ -283,3 +289,128 @@ async def dummy_openai_task_runner(task_datum):
 
     return task_datum
 
+
+"""
+OpenAI Embedding
+"""
+
+
+class OpenAIEmbTaskDatum(BasicTaskDatum):
+    tokenizer = None
+    client = None
+    bytes_file = None
+
+    def __init__(self, task_id, data):
+        super().__init__(task_id, data)
+
+        self.data["in_tokens"] = len(self.tokenizer.encode(self.data["text_in"]))
+        self.embedding = []
+        return
+
+    def finish(self):
+        for v in self.embedding:
+            v = struct.pack("d", v)
+            self.bytes_file.write(v)
+        return
+
+
+async def openai_emb_task_runner(task_datum):
+    task_datum.start_time = time.time()
+    completion = await task_datum.client.embeddings.create(
+        input=task_datum.data["text_in"],
+        model=task_datum.data["model"],
+        dimensions=task_datum.data["emb_dimension"],
+    )
+    task_datum.end_time = time.time()
+
+    task_datum.embedding = completion.data[0].embedding
+
+    return task_datum
+
+
+"""
+Deep Infra
+"""
+
+
+class DeepInfraTaskDatum(BasicTaskDatum):
+    client = None
+
+    def __init__(self, task_id, data):
+        super().__init__(task_id, data)
+
+        self.data["text_out_list"] = []
+        return
+
+
+class DeepInfraQuotaManager(BasicQuotaManager):
+    def __init__(self, max_concurrent_requests):
+        super().__init__()
+        self.requests_quota = max_concurrent_requests
+        return
+
+    def has_enough_quota(self, init_task_datum):
+        return self.requests_quota > 0
+
+    def reclaim_quota(self, done_task_datum_queue):
+        while done_task_datum_queue:
+            heapq.heappop(done_task_datum_queue)
+            self.requests_quota += 1
+        return
+
+    def deduct_quota(self, init_task_datum):
+        self.requests_quota -= 1
+        return
+
+
+async def deepinfra_task_runner(task_datum):
+    task_datum.start_time = time.time()
+    completion = await task_datum.client.chat.completions.create(
+        model=task_datum.data["model"],
+        n=task_datum.data["choices"],
+        messages=[
+            {"role": "user", "content": task_datum.data["text_in"]},
+        ],
+    )
+    task_datum.end_time = time.time()
+
+    task_datum.data["text_out_list"] = [
+        choice.message.content
+        for choice in completion.choices
+    ]
+
+    return task_datum
+
+
+"""
+Deep Infra Embedding
+"""
+
+
+class DeepInfraEmbTaskDatum(BasicTaskDatum):
+    client = None
+    bytes_file = None
+
+    def __init__(self, task_id, data):
+        super().__init__(task_id, data)
+
+        self.embedding = []
+        return
+
+    def finish(self):
+        for v in self.embedding:
+            v = struct.pack("d", v)
+            self.bytes_file.write(v)
+        return
+
+
+async def deepinfra_emb_task_runner(task_datum):
+    task_datum.start_time = time.time()
+    completion = await task_datum.client.embeddings.create(
+        input=task_datum.data["text_in"],
+        model=task_datum.data["model"],
+    )
+    task_datum.end_time = time.time()
+
+    task_datum.embedding = completion.data[0].embedding
+    return task_datum
