@@ -81,8 +81,8 @@ def main():
             logger.info(f"[arg.{key}] {value}")
 
     # show result
-    # show_result(arg)
-    # return
+    show_result(arg)
+    return
 
     # client
     api_key = input("API key: ")
@@ -109,6 +109,7 @@ def main():
             "People eat hot dogs.",
             "Dogs run fast.",
             "Human drinks water.",
+            "Human does drink water.",
         ],
     ]
 

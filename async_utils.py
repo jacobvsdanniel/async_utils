@@ -410,6 +410,7 @@ async def deepinfra_emb_task_runner(task_datum):
     completion = await task_datum.client.embeddings.create(
         input=task_datum.data["text_list"],
         model=task_datum.data["model"],
+        encoding_format="float",
     )
     task_datum.end_time = time.time()
 
