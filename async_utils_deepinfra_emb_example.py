@@ -112,6 +112,9 @@ def main():
             "Human does drink water.",
         ],
     ]
+    text_data = [
+        ["I have a batch."] * 1024,
+    ]
 
     with open(arg.input_file, "w", encoding="utf8") as f:
         for text_list in text_data:
