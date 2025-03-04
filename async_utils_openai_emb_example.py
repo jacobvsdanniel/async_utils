@@ -39,31 +39,35 @@ def show_result(arg):
     with open(arg.output_file, "r", encoding="utf8") as f:
         for line in f:
             datum = json.loads(line)
-            text = datum["data"]["text_in"]
-            bytes_j = bytes_i + vector_size
-            vector = [v[0] for v in struct.iter_unpack("d", emb_bytes[bytes_i:bytes_j])]
-            vector = np.array(vector, dtype=np.float64)
-            bytes_i = bytes_j
-            data.append((text, vector))
-    logger.info(f"collected {len(data):,} text vectors")
+            text_list = datum["data"]["text_list"]
+            batch = []
+            for text in text_list:
+                bytes_j = bytes_i + vector_size
+                vector = [v[0] for v in struct.iter_unpack("d", emb_bytes[bytes_i:bytes_j])]
+                vector = np.array(vector, dtype=np.float64)
+                bytes_i = bytes_j
+                batch.append((text, vector))
+            data.append(batch)
+    logger.info(f"collected {len(data):,} batches")
 
-    # show text
-    for di, (text, _vector) in enumerate(data):
-        di += 1
-        logger.info(f"#{di}: {text}")
+    for batch in data:
+        # show text
+        for di, (text, _vector) in enumerate(batch):
+            di += 1
+            logger.info(f"#{di}: {text}")
 
-    # show similarity
-    for di, (ti, vi) in enumerate(data):
-        di += 1
-        for dj, (tj, vj) in enumerate(data):
-            dj += 1
-            if di >= dj:
-                continue
-            similarity = np.dot(vi, vj)
-            logger.info("")
-            logger.info(f"#{di}: {ti}")
-            logger.info(f"#{dj}: {tj}")
-            logger.info(f"sim({di},{dj})={similarity:.0%}")
+        # show similarity
+        for di, (ti, vi) in enumerate(batch):
+            di += 1
+            for dj, (tj, vj) in enumerate(batch):
+                dj += 1
+                if di >= dj:
+                    continue
+                similarity = np.dot(vi, vj)
+                logger.info("")
+                logger.info(f"#{di}: {ti}")
+                logger.info(f"#{dj}: {tj}")
+                logger.info(f"sim({di},{dj})={similarity:.0%}")
     return
 
 
@@ -88,24 +92,36 @@ def main():
     OpenAIEmbTaskDatum.bytes_file = open(arg.emb_file, "wb")
 
     # model
-    model = "text-embedding-3-large"
+    model = "text-embedding-3-small"
+    dimension = 256
     OpenAIEmbTaskDatum.tokenizer = tiktoken.encoding_for_model(model)
 
     # input data
-    text_list = [
-        "I have a dream.",
-        "I had a dream.",
-        "Keyboard is useful",
-        "Dogs bark.",
-        "Dogs can bark.",
+    text_data = [
+        [
+            "I have a dream.",
+            "I had a dream.",
+            "Keyboard is useful",
+            "Dogs bark.",
+            "Dogs can bark.",
+        ],
+        [
+            "People eat hot dogs.",
+            "Dogs run fast.",
+            "Human drinks water.",
+            "Human does drink water.",
+        ],
+    ]
+    text_data = [
+        ["I have a batch."] * 1024,
     ]
 
     with open(arg.input_file, "w", encoding="utf8") as f:
-        for text in text_list:
+        for text_list in text_data:
             datum = {
-                "text_in": text,
+                "text_list": text_list,
                 "model": model,
-                "emb_dimension": 256,
+                "dimension": dimension,
             }
             json.dump(datum, f)
             f.write("\n")

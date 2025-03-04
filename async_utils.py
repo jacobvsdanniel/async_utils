@@ -303,28 +303,35 @@ class OpenAIEmbTaskDatum(BasicTaskDatum):
     def __init__(self, task_id, data):
         super().__init__(task_id, data)
 
-        self.data["in_tokens"] = len(self.tokenizer.encode(self.data["text_in"]))
-        self.embedding = []
+        self.data["in_tokens"] = sum(
+            len(self.tokenizer.encode(text))
+            for text in self.data["text_list"]
+        )
+        self.vector_list = []
         return
 
     def finish(self):
-        for v in self.embedding:
-            v = struct.pack("d", v)
-            self.bytes_file.write(v)
+        for vector in self.vector_list:
+            for v in vector:
+                v = struct.pack("d", v)
+                self.bytes_file.write(v)
         return
 
 
 async def openai_emb_task_runner(task_datum):
     task_datum.start_time = time.time()
     completion = await task_datum.client.embeddings.create(
-        input=task_datum.data["text_in"],
-        model=task_datum.data["model"],
-        dimensions=task_datum.data["emb_dimension"],
+        input=task_datum.data["text_list"],
+        model=task_datum.data.get("model", "text-embedding-3-small"),
+        dimensions=task_datum.data.get("dimension", 256),
+        encoding_format="float",
     )
     task_datum.end_time = time.time()
 
-    task_datum.embedding = completion.data[0].embedding
-
+    task_datum.vector_list = [
+        datum.embedding
+        for datum in completion.data
+    ]
     return task_datum
 
 
