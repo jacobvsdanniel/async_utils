@@ -36,7 +36,7 @@ def main():
 
     # input data
     with open(arg.input_file, "w", encoding="utf8") as f:
-        for i in range(10):
+        for i in range(1000):
             datum = {
                 "text_in": f"Reverse the word order of the sentence: I have {i + 1} fish.",
                 "model": model,
@@ -45,7 +45,7 @@ def main():
             f.write("\n")
 
     # quota
-    quota_manager = FedGPTQuotaManager(max_concurrent_requests=10)
+    quota_manager = FedGPTQuotaManager(max_concurrent_requests=50)
 
     # run
     asyncio.run(process_batch_data(
