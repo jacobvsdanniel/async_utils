@@ -9,6 +9,8 @@ import logging
 import datetime
 from collections import deque
 
+import aiohttp
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(message)s",
@@ -425,4 +427,59 @@ async def deepinfra_emb_task_runner(task_datum):
         datum.embedding
         for datum in completion.data
     ]
+    return task_datum
+
+
+"""
+FedGPT
+"""
+
+
+class FedGPTTaskDatum(BasicTaskDatum):
+    api_key = ""
+    api_url = ""
+
+    def __init__(self, task_id, data):
+        super().__init__(task_id, data)
+
+        self.data["text_out"] = ""
+        return
+
+
+class FedGPTQuotaManager(BasicQuotaManager):
+    def __init__(self, max_concurrent_requests):
+        super().__init__()
+        self.requests_quota = max_concurrent_requests
+        return
+
+    def has_enough_quota(self, init_task_datum):
+        return self.requests_quota > 0
+
+    def reclaim_quota(self, done_task_datum_queue):
+        while done_task_datum_queue:
+            heapq.heappop(done_task_datum_queue)
+            self.requests_quota += 1
+        return
+
+    def deduct_quota(self, init_task_datum):
+        self.requests_quota -= 1
+        return
+
+
+async def fedgpt_task_runner(task_datum):
+    task_datum.start_time = time.time()
+    obj = {
+        "model": task_datum.data["model"],
+        "mode": "normal",
+        "messages": [
+            {"role": "user", "content": task_datum.data["text_in"]},
+        ],
+    }
+    headers = {"Accept": "application/json", "x-api-key": task_datum.api_key}
+    async with aiohttp.ClientSession() as session:
+        async with session.post(task_datum.api_url, headers=headers, json=obj, ssl=False) as responses:
+            responses = await responses.json()
+    task_datum.end_time = time.time()
+
+    task_datum.data["text_out"] = responses["messages"][0]["content"]
     return task_datum
