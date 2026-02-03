@@ -42,7 +42,7 @@ def main():
     with open(arg.input_file, "w", encoding="utf8") as f:
         for i in range(100):
             datum = {
-                "text_in": f"Reverse the word order of the sentence: I have {i + 1} fish.",
+                "text_in": f"Reverse the word order of the sentence: 土地公飼養{i + 1}隻吳郭魚。",
                 "model": model,
                 "choices": choices,
             }

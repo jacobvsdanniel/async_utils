@@ -1,3 +1,0 @@
-tiktoken==0.7.0
-openai==1.65.2
-aiohttp==3.8.6

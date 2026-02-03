@@ -121,7 +121,7 @@ async def process_batch_data(
                 if successful:
                     running_task_datum.finish()
                     logger.info(f"[success] {running_task_datum.get_log_string()}")
-                    json.dump(running_task_datum.get_json_obj(), fw)
+                    json.dump(running_task_datum.get_json_obj(), fw, ensure_ascii=False)
                     fw.write("\n")
                     fw.flush()
                 else:
