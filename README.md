@@ -1,5 +1,8 @@
 # Async Utils
-**Utilities for running asynchronous IO tasks.**
+Utilities for running asynchronous IO tasks.
+
+[![PyPI version](https://img.shields.io/pypi/v/jb_async_utils.svg?maxAge=3600)](https://pypi.org/project/jb_async_utils)
+[![PyPI license](https://img.shields.io/pypi/l/jb_async_utils.svg?maxAge=3600)](https://github.com/jacobvsdanniel/async_utils/blob/main/LICENSE)
 
 Authors
 - Li Peng-Hsuan (李朋軒) @ ailabs.tw (jacobvsdanniel [at] gmail.com)
