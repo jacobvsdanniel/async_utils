@@ -17,7 +17,7 @@ python -m pip install jb_async_utils
 
 ## Usage
 
-For more detailed usage, see *https://github.com/jacobvsdanniel/async_utils/examples*
+For more detailed usage, see *examples*
 
 ```python
 import json
