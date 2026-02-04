@@ -11,7 +11,7 @@ Authors
 Features
 - A framework of modularized, customizable data definition, quota management, and task runner
 - A barebone math application for demo purposes
-- OpenAI and Deep Infra async API applications for dynamic, high-throughput, real-time, batched GPT requests
+- OpenAI and Deep Infra applications for high-throughput, real-time, batched requests
 
 ## Installation
 
