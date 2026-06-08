@@ -223,13 +223,6 @@ class OpenAITaskDatum(BasicTaskDatum):
         self.data["text_out_list"] = []
         return
 
-    def set_out_tokens(self):
-        self.data["out_tokens"] = sum(
-            len(self.tokenizer.encode(text_out))
-            for text_out in self.data["text_out_list"]
-        )
-        return
-
 
 class OpenAIQuotaManager(BasicQuotaManager):
     def __init__(self, rpm, tpm):
@@ -272,7 +265,8 @@ async def openai_task_runner(task_datum):
         choice.message.content
         for choice in completion.choices
     ]
-    task_datum.set_out_tokens()
+    task_datum.data["prompt_tokens"] = completion.usage.prompt_tokens
+    task_datum.data["completion_tokens"] = completion.usage.completion_tokens
 
     return task_datum
 
@@ -287,7 +281,6 @@ async def dummy_openai_task_runner(task_datum):
         f"output-{i + 1}"
         for i in range(task_datum.data["choices"])
     ]
-    task_datum.set_out_tokens()
 
     return task_datum
 
